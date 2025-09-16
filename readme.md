@@ -44,10 +44,9 @@ Isso criará e iniciará os serviços definidos em `docker-compose.yaml`.
 
 ### Serviços e acessos
 
-- **Evolution API**: `http://localhost:8080/manager/`
-
 - **n8n**: `http://localhost:5678`
 
+- **Evolution API**: `http://localhost:8080/manager/`
 Observação: os serviços também se comunicam entre si via a rede interna `evolution_n8n_net` do Docker.
 
 ### URLs/Hosts para configurar nos painéis (rede interna do Docker)
