@@ -54,7 +54,7 @@ Ao configurar integrações entre os serviços, use os nomes dos serviços do Do
 
 ### Credencial da Evolution API no n8n
   
-Use o server-url `http://evolution-api:8080` no momento de criar uma credencial da Evolution API no n8n.
+Use `http://evolution-api:8080` como url para o campo "Server Url"  no momento de criar uma credencial da Evolution API no n8n.
 
 <img src="assets/evolution-account.png" alt="Exemplo de configuração Credencial da Evo" width="750"/>
 
