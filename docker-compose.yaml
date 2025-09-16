@@ -1,0 +1,120 @@
+services:
+  evolution-api:
+    container_name: evolution_api
+    image: evoapicloud/evolution-api:latest
+    restart: always
+    depends_on:
+      - redis-evolution
+      - postgres-evolution
+    ports:
+      - 8080:8080
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - evolution_n8n_net
+    env_file:
+      - .env
+    expose:
+      - 8080
+
+  postgres-evolution:
+    container_name: postgres_evolution
+    image: postgres:15
+    networks:
+      - evolution_n8n_net
+    command: [
+      "postgres",
+      "-c", "max_connections=200",
+      "-c", "listen_addresses=*",
+      "-c", "shared_buffers=256MB",
+      "-c", "effective_cache_size=1GB",
+      "-c", "work_mem=4MB"
+    ]
+    restart: always
+    ports:
+      - 5436:5432
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=evolution_db
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+    - postgres_evolution_data:/var/lib/postgresql/data
+
+  redis-evolution:
+    image: redis:latest
+    networks:
+      - evolution_n8n_net
+    container_name: redis_evolution
+    command: >
+      redis-server --port 6379 --appendonly yes
+    volumes:
+      - redis_evolution_data:/data
+    restart: always
+    ports:
+      - 6380:6379
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
+      TZ: ${TZ}
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
+      N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED}
+      DB_TYPE: ${N8N_DB_TYPE}
+      DB_POSTGRESDB_HOST: postgres-n8n
+      DB_POSTGRESDB_PORT: ${POSTGRES_PORT}
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_SCHEMA: ${N8N_DB_SCHEMA}
+      QUEUE_MODE: redis
+      QUEUE_REDIS_HOST: ${REDIS_HOST}
+      QUEUE_REDIS_PORT: ${REDIS_PORT}
+    networks:
+      - evolution_n8n_net
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - postgres-n8n
+      - redis-n8n
+    restart: always
+
+  postgres-n8n:
+    image: postgres:15
+    container_name: postgres_n8n
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - evolution_n8n_net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  redis-n8n:
+    image: redis:latest
+    container_name: redis_n8n
+    networks:
+      - evolution_n8n_net
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  evolution_instances:
+  postgres_evolution_data:
+  redis_evolution_data:
+  n8n_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  evolution_n8n_net:
+    driver: bridge
